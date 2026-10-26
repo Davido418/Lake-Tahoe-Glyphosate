@@ -7,20 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/1sJ5l_8m9ZIjZvrzrLMHvwCxwZVCvro6_
 """
 
-"""
-Simple Monte Carlo: glyphosate -> cyanobacteria growth -> detritus -> dissolved oxygen (DO).
-
-One scenario, with uncertain inputs represented by distributions. Intentionally barebones: no
-nutrients, light, mixing, photosynthesis or oxygen replenishment, so "potential DO" is a floor.
-
-Detritus facts used (two different things, not one):
-  - More than 80% of the NEW bloom biomass becomes detritus by day 21        -> detritus_frac
-  - 41.9% of that detritus decomposes in the first 48 h; the 21-day fraction
-    follows from the SAME sampled 48 h value (first-order decay)             -> decomp_48h, decomp_21d
-
-All masses are dry mass in mg/L. DO is dissolved oxygen in mg/L.
-"""
-
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -109,7 +95,7 @@ total_detritus = detritus0 + bloom_detritus
 # 6. One first-order decomposition process: 21-day fraction derived from the same 48 h draw
 decomp_21d = 1 - (1 - decomp_48h) ** (T_DECOMP / 2)
 
-# 7. Oxygen demand and potential DO (no replenishment)
+# 7. Oxygen demand and potential DO
 demand_48h = o2_yield * decomp_48h * bloom_detritus
 demand_21d = o2_yield * decomp_21d * bloom_detritus
 do_48h = np.maximum(do0 - demand_48h, 0)
@@ -163,7 +149,7 @@ def loghist(ax, x, **kw):
 
 fig, ax = plt.subplots(2, 3, figsize=(16, 9))
 a = ax[0, 0]; a.hist(glyphosate, bins=60, color="#7f8c8d", alpha=0.8)
-a.axvline(0.083, color="k", ls="--", label="Reference"); a.set_title("Glyphosate concentration")
+a.axvline(0.083, color="k", ls="--", label="0.083 mg/L Reference"); a.set_title("Glyphosate concentration")
 a.set_xlabel("mg/L"); a.legend(frameon=False)
 
 a = ax[0, 1]; a.hist(share_peak, bins=60, color="#c0392b", alpha=0.75)
@@ -181,14 +167,14 @@ a.set_title("Peak cyanobacteria biomass"); a.set_xlabel("mg/L dry mass (log scal
 a = ax[1, 1]
 loghist(a, demand_21d, color="#34495e", alpha=0.45, label="21 days")
 loghist(a, demand_48h, color="#c0392b", alpha=0.7, label="First 48 h")
-a.set_title("Oxygen demand from bloom detritus"); a.set_xlabel("mg/L (log scale)"); a.legend(frameon=False)
+a.set_title("Oxygen consumed from bloom detritus"); a.set_xlabel("mg/L (log scale)"); a.legend(frameon=False)
 
 a = ax[1, 2]
 a.hist(do_21d, bins=60, color="#34495e", alpha=0.45, label="After 21 days")
 a.hist(do_48h, bins=60, color="#2980b9", alpha=0.7, label="After 48 h")
 for t, c, lab in [(3, "darkred", "zooplankton stress"), (5, "orange", "fish stress"), (4, "red", "fish deadly")]:
     a.axvline(t, color=c, ls=":", label=lab)
-a.set_xlim(0, 9); a.set_title("Potential DO (no replenishment)"); a.set_xlabel("mg/L"); a.legend(frameon=False, fontsize=8, loc="upper left")
+a.set_xlim(0, 9); a.set_title("Potential DO"); a.set_xlabel("mg/L"); a.legend(frameon=False, fontsize=8, loc="upper left")
 
 for a in ax.ravel():
     a.spines[["top", "right"]].set_visible(False); a.set_ylabel("Monte Carlo draws")
